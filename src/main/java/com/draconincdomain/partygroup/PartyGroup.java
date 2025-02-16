@@ -17,6 +17,10 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.ServerConnection;
+import com.velocitypowered.api.proxy.messages.ChannelIdentifier;
+import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 import org.slf4j.Logger;
@@ -39,6 +43,8 @@ public class PartyGroup {
     private final Logger logger;
     private static PartyGroup instance;
 
+    private final MinecraftChannelIdentifier channelIdentifierTeleport = MinecraftChannelIdentifier.from("partygroup:main");
+
     @Inject
     public PartyGroup(ProxyServer server, Logger logger, @DataDirectory Path pluginDataDirectory) {
         this.server = server;
@@ -50,6 +56,7 @@ public class PartyGroup {
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
         CommandManager commandManager = server.getCommandManager();
+        server.getChannelRegistrar().register(channelIdentifierTeleport);
         registerPluginCommand(commandManager);
         registerPluginEvents();
         new PartyManager();
@@ -135,6 +142,25 @@ public class PartyGroup {
         player.ifPresent(plyr -> plyr.sendMessage(ComponentBuilder.create(message, ColourUtil.fromEnum(colour)).build()));
     }
 
+    public boolean sendPluginMessage(RegisteredServer server, byte[] data) {
+        return server.sendPluginMessage(getChannelIdentifier(), data);
+    }
+
+    public boolean sendPluginMessage(Player player, byte[] data) {
+        Optional<ServerConnection> connection = player.getCurrentServer();
+
+        if (connection.isPresent()) {
+            return connection.get().sendPluginMessage(getChannelIdentifier(), data);
+        } else {
+            logger.error("Failed to send plugin message to player: {}. Player is not connected to a server.", player.getUsername());
+            return false;
+        }
+    }
+
+    public RegisteredServer getServerByServerConnection(ServerConnection serverConnection) {
+        return getServer().getServer(serverConnection.getServerInfo().getName()).orElse(null);
+    }
+
     public ProxyServer getServer() {
         return server;
     }
@@ -147,7 +173,12 @@ public class PartyGroup {
         return pluginDataDirectory;
     }
 
+    public ChannelIdentifier getChannelIdentifier() {
+        return channelIdentifierTeleport;
+    }
+
     public static PartyGroup getInstance() {
         return instance;
     }
+
 }

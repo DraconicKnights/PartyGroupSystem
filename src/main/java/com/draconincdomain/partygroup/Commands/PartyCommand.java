@@ -8,8 +8,12 @@ import com.draconincdomain.partygroup.PartyGroup;
 import com.draconincdomain.partygroup.Utils.ColourUtil;
 import com.draconincdomain.partygroup.Utils.ComponentBuilder;
 import com.draconincdomain.partygroup.Utils.PlayerMessage;
+import com.draconincdomain.partygroup.Utils.PluginMessageBuilder;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.Component;
 
 import java.util.Arrays;
@@ -68,6 +72,9 @@ public class PartyCommand extends CommandCore {
             case "disband":
                 disbandParty(player);
                 break;
+            case "test":
+                testServer(player);
+                break;
             default:
                 break;
         }
@@ -125,9 +132,11 @@ public class PartyCommand extends CommandCore {
             player.getCurrentServer().ifPresent(playerServer -> {
                 if (playerServer.getServer().equals(targetServer.getServer())) {
                     PlayerMessage.playerSendMessage(player, "Teleporting you to " + target.getUsername(), ColourUtil.CustomColour.GREEN);
+                    teleportWithinServer(player, target);
                 } else {
                     player.createConnectionRequest(target.getCurrentServer().get().getServer()).fireAndForget();
                     PlayerMessage.playerSendMessage(player, "Teleporting you to " + target.getUsername(), ColourUtil.CustomColour.GREEN);
+                    teleportWithinServer(player, target);
                 }
             });
         });
@@ -153,6 +162,7 @@ public class PartyCommand extends CommandCore {
 
             if (member != null && !member.equals(player)) {
                 member.createConnectionRequest(leaderServer.getServer()).fireAndForget();
+                teleportWithinServer(member, player);
                 member.sendMessage(Component.text("You have been warped to the party leader's server.", ColourUtil.CustomColour.GREEN.getTextColour()));
             }
         });
@@ -375,5 +385,23 @@ public class PartyCommand extends CommandCore {
                 member.sendMessage(messageBuilder.build());
             }
         });
+    }
+
+    private void teleportWithinServer(Player player, Player target) {
+        RegisteredServer server = PartyGroup.getInstance().getServerByServerConnection(player.getCurrentServer().get());
+
+        new PluginMessageBuilder("Teleport")
+                .writeString(player.getUsername())
+                .writeString(target.getUsername())
+                .send(server);
+    }
+
+    private void testServer(Player player) {
+        RegisteredServer server = PartyGroup.getInstance().getServerByServerConnection(player.getCurrentServer().get());
+
+        new PluginMessageBuilder("Test")
+                .writeString(player.getUsername())
+                .writeUUID(player.getUniqueId())
+                .send(server);
     }
 }
