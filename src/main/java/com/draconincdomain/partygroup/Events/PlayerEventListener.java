@@ -57,7 +57,11 @@ public class PlayerEventListener {
 
                     PartyManager.getInstance().removePlayerFromParty(party, playerUUID);
                     PartyGroup.getInstance().getLogger().info("Player: {} has been removed from the party after 5 minutes.", player.getUsername());
-                    PartyDataManager.getInstance().saveParty(party);
+
+                    if (!party.getPlayers().isEmpty()) {
+                        PartyDataManager.getInstance().saveParty(party);
+                    }
+
                 }).delay(5, TimeUnit.MINUTES).schedule();
 
                 reconnectionTasks.put(playerUUID, task);

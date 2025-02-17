@@ -44,14 +44,14 @@ public class AdminPartyCommand extends CommandCore {
                 break;
             case "forcejoin":
                 if (args.length < 2) {
-                    PlayerMessage.playerSendMessage(player, "Usage: /aparty forcejoin <partyId>", ColourUtil.CustomColour.RED);
+                    PlayerMessage.playerSendMessage(player, "Usage: /aparty forcejoin <playerName> <partyId>", ColourUtil.CustomColour.RED);
                     return;
                 }
                 forceJoinParty(player, args[1], args[2]);
                 break;
             case "forceleave":
                 if (args.length < 2) {
-                    PlayerMessage.playerSendMessage(player, "Usage: /aparty forceleave <partyId>", ColourUtil.CustomColour.RED);
+                    PlayerMessage.playerSendMessage(player, "Usage: /aparty forceleave <playerName>", ColourUtil.CustomColour.RED);
                     return;
                 }
                 forceLeaveParty(player, args[1]);
@@ -77,9 +77,9 @@ public class AdminPartyCommand extends CommandCore {
                 .append(" - List all parties\n", ColourUtil.CustomColour.GOLD.getTextColour())
                 .append("/aparty details <partyID>", ColourUtil.CustomColour.AQUA.getTextColour())
                 .append(" - Gives details of the target party\n", ColourUtil.CustomColour.GOLD.getTextColour())
-                .append("/aparty forcejoin <partyID>", ColourUtil.CustomColour.AQUA.getTextColour())
+                .append("/aparty forcejoin <playerName> <partyId>", ColourUtil.CustomColour.AQUA.getTextColour())
                 .append(" - Force join the target party\n", ColourUtil.CustomColour.GOLD.getTextColour())
-                .append("/aparty forceleave <partyID>", ColourUtil.CustomColour.AQUA.getTextColour())
+                .append("/aparty forceleave <playerName>", ColourUtil.CustomColour.AQUA.getTextColour())
                 .append(" - Force leave the target party\n", ColourUtil.CustomColour.GOLD.getTextColour())
                 .append("/aparty disband <partyID>", ColourUtil.CustomColour.AQUA.getTextColour())
                 .append(" - Force the party to disband\n", ColourUtil.CustomColour.GOLD.getTextColour())
@@ -156,7 +156,9 @@ public class AdminPartyCommand extends CommandCore {
             return;
         }
 
-        Party party = PartyManager.getInstance().getAllParties().get(partyId);
+        int partyIdInt = Integer.parseInt(partyId);  // Convert String to int
+
+        Party party = PartyManager.getInstance().getAllParties().get(partyIdInt);
         if (party == null) {
             PlayerMessage.playerSendMessage(admin, "Party not found", ColourUtil.CustomColour.RED);
             return;
@@ -169,6 +171,7 @@ public class AdminPartyCommand extends CommandCore {
 
     private void forceLeaveParty(Player admin, String playerName) {
         Player target = PartyGroup.getInstance().getServer().getPlayer(playerName).orElse(null);
+
         if (target == null) {
             PlayerMessage.playerSendMessage(admin, "Player not found", ColourUtil.CustomColour.RED);
             return;
@@ -179,20 +182,27 @@ public class AdminPartyCommand extends CommandCore {
             return;
         }
 
-        Party party = PartyManager.getInstance().getAllParties().get(target);
+        Party party = PartyManager.getInstance().findPlayerParty(target.getUniqueId());
+
         party.removeMember(target.getUniqueId());
         PlayerMessage.playerSendMessage(target, "You have been forcefully removed from your party", ColourUtil.CustomColour.RED);
         PlayerMessage.playerSendMessage(admin, "Player " + playerName + " has been forcefully removed from their party", ColourUtil.CustomColour.GREEN);
     }
 
     private void disbandParty(Player admin, String partyId) {
-        Party party = PartyManager.getInstance().getAllParties().get(partyId);
-        if (party == null) {
-            PlayerMessage.playerSendMessage(admin, "Party not found", ColourUtil.CustomColour.RED);
-            return;
-        }
+        try {
+            int partyIdInt = Integer.parseInt(partyId);  // Convert String to int
+            Party party = PartyManager.getInstance().getAllParties().get(partyIdInt);
 
-        party.partyDisband();
-        PlayerMessage.playerSendMessage(admin, "Party " + partyId + " has been disbanded", ColourUtil.CustomColour.GREEN);
+            if (party == null) {
+                PlayerMessage.playerSendMessage(admin, "Party not found", ColourUtil.CustomColour.RED);
+                return;
+            }
+
+            party.partyDisband();
+            PlayerMessage.playerSendMessage(admin, "Party " + partyId + " has been disbanded", ColourUtil.CustomColour.GREEN);
+        } catch (NumberFormatException e) {
+            PlayerMessage.playerSendMessage(admin, "Invalid party ID format", ColourUtil.CustomColour.RED);
+        }
     }
 }

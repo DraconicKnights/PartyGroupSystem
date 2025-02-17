@@ -39,6 +39,10 @@ public class PartyCommand extends CommandCore {
                 createParty(player, args);
                 break;
             case "invite":
+                if (args.length < 2) {
+                    PlayerMessage.playerSendMessage(player, "Usage: /party invite <Player>", ColourUtil.CustomColour.RED);
+                    return;
+                }
                 invitePlayer(player, args);
                 break;
             case "leave":
@@ -48,12 +52,24 @@ public class PartyCommand extends CommandCore {
                 listParty(player);
                 break;
             case "promote":
+                if (args.length < 2) {
+                    PlayerMessage.playerSendMessage(player, "Usage: /party promote <Player>", ColourUtil.CustomColour.RED);
+                    return;
+                }
                 promoteMember(player, args);
                 break;
             case "demote":
+                if (args.length < 2) {
+                    PlayerMessage.playerSendMessage(player, "Usage: /party demote <Player>", ColourUtil.CustomColour.RED);
+                    return;
+                }
                 demoteMember(player, args);
                 break;
             case "chat":
+                if (args.length < 2) {
+                    PlayerMessage.playerSendMessage(player, "Usage: /party chat <Message>", ColourUtil.CustomColour.RED);
+                    return;
+                }
                 handlePlayerChat(player, args);
                 break;
             case "join":
@@ -110,8 +126,10 @@ public class PartyCommand extends CommandCore {
     }
 
     private void teleportToPlayer(Player player, String[] args) {
-        if (args.length < 2) {
-            PlayerMessage.playerSendMessage(player, "Usage: /party tp <Player>", ColourUtil.CustomColour.RED);
+        Party party = PartyManager.getInstance().findPlayerParty(player.getUniqueId());
+
+        if (party == null) {
+            player.sendMessage(Component.text("You must be in a party to use this command.", ColourUtil.CustomColour.RED.getTextColour()));
             return;
         }
 
@@ -120,8 +138,6 @@ public class PartyCommand extends CommandCore {
             PlayerMessage.playerSendMessage(player, "Player not found", ColourUtil.CustomColour.RED);
             return;
         }
-
-        Party party = PartyManager.getInstance().findPlayerParty(player.getUniqueId());
 
         if (!party.getPlayers().containsKey(target.getUniqueId())) {
             PlayerMessage.playerSendMessage(player, "Player is not in your party", ColourUtil.CustomColour.RED);
@@ -198,10 +214,6 @@ public class PartyCommand extends CommandCore {
     }
 
     private void invitePlayer(Player player, String[] args) {
-        if (args.length < 2) {
-            PlayerMessage.playerSendMessage(player, "Usage: /party invite <Player>", ColourUtil.CustomColour.RED);
-            return;
-        }
 
         Party party = PartyManager.getInstance().findPlayerParty(player.getUniqueId());
         if (party == null) {
@@ -277,10 +289,6 @@ public class PartyCommand extends CommandCore {
     }
 
     private void promoteMember(Player player, String[] args) {
-        if (args.length < 2) {
-            PlayerMessage.playerSendMessage(player, "Usage: /party promote <Player>", ColourUtil.CustomColour.RED);
-            return;
-        }
 
         Party party = PartyManager.getInstance().findPlayerParty(player.getUniqueId());
         if (party == null) {
@@ -315,10 +323,6 @@ public class PartyCommand extends CommandCore {
     }
 
     private void demoteMember(Player player, String[] args) {
-        if (args.length < 2) {
-            PlayerMessage.playerSendMessage(player, "Usage: /party demote <Player>", ColourUtil.CustomColour.RED);
-            return;
-        }
 
         Party party = PartyManager.getInstance().findPlayerParty(player.getUniqueId());
         if (party == null) {
@@ -353,9 +357,6 @@ public class PartyCommand extends CommandCore {
     }
 
     private void handlePlayerChat(Player player, String[] args) {
-        if (args.length < 2) {
-            return;
-        }
 
         Party party = PartyManager.getInstance().findPlayerParty(player.getUniqueId());
         if (party == null) {

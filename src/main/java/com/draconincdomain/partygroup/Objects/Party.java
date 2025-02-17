@@ -96,11 +96,12 @@ public class Party implements Serializable {
             promoteNextLeader();
         }
 
+        Players.remove(playerUUID);
+
         if (Players.isEmpty()) {
             PartyManager.getInstance().alertParty(this, PartyNotificationAlert.SERVER, "Their are no more members left within this party so it will be auto disbanded");
             partyDisband();
         }
-        Players.remove(playerUUID);
     }
 
     public void partyDisband() {
